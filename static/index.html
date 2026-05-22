@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JurisFlow - Controle de Demandas Judiciais</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js for Premium Dashboard Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom Style -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dark-theme">
+    <!-- Notificações Toast -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- ==========================================
+         1. TELA DE LOGIN
+         ========================================== -->
+    <div id="login-view" class="view-container active">
+        <div class="login-wrapper">
+            <div class="login-card">
+                <div class="login-header">
+                    <div class="logo">
+                        <i class="fa-solid fa-scale-balanced logo-icon"></i>
+                        <span>JurisFlow</span>
+                    </div>
+                    <h1>Bem-vindo de volta</h1>
+                    <p>Entre com suas credenciais para acessar o painel de demandas.</p>
+                </div>
+                <form id="login-form" class="login-form">
+                    <div class="input-group">
+                        <label for="login-username"><i class="fa-solid fa-user"></i> Usuário</label>
+                        <input type="text" id="login-username" placeholder="Digite seu usuário" required autocomplete="username">
+                    </div>
+                    <div class="input-group">
+                        <label for="login-password"><i class="fa-solid fa-lock"></i> Senha</label>
+                        <input type="password" id="login-password" placeholder="Digite sua senha" required autocomplete="current-password">
+                    </div>
+                    <button type="submit" class="btn btn-primary btn-block">
+                        Entrar <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </form>
+                <div class="login-footer">
+                    <p>Controle de Demandas Judiciais da Saúde</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         2. TELA DA APLICAÇÃO PRINCIPAL (APP)
+         ========================================== -->
+    <div id="app-view" class="view-container">
+        <!-- Sidebar Esquerda -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo" id="sidebar-logo" style="cursor: pointer;" title="Ir para o Dashboard">
+                    <i class="fa-solid fa-scale-balanced logo-icon"></i>
+                    <span>JurisFlow</span>
+                </div>
+            </div>
+            
+            <nav class="sidebar-menu">
+                <ul>
+                    <li class="menu-item active" data-target="dashboard">
+                        <a href="#"><i class="fa-solid fa-chart-pie"></i> <span>Dashboard</span></a>
+                    </li>
+                    <li class="menu-item" data-target="demands">
+                        <a href="#"><i class="fa-solid fa-list-check"></i> <span>Demandas</span></a>
+                    </li>
+                    <li class="menu-item" data-target="completed">
+                        <a href="#"><i class="fa-solid fa-circle-check"></i> <span>Concluídas</span></a>
+                    </li>
+                    <li class="menu-item" data-target="new-demand">
+                        <a href="#"><i class="fa-solid fa-circle-plus"></i> <span>Nova Demanda</span></a>
+                    </li>
+                    <li class="menu-item admin-only hidden" data-target="patients">
+                        <a href="#"><i class="fa-solid fa-hospital-user"></i> <span>Pacientes</span></a>
+                    </li>
+                    <li class="menu-item admin-only hidden" data-target="users">
+                        <a href="#"><i class="fa-solid fa-users-gear"></i> <span>Usuários</span></a>
+                    </li>
+                    <li class="menu-item" data-target="reports">
+                        <a href="#"><i class="fa-solid fa-file-invoice-dollar"></i> <span>Relatórios</span></a>
+                    </li>
+                </ul>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-badge" id="sidebar-user-badge" style="cursor: pointer;" title="Minha Conta">
+                    <div class="user-avatar" id="user-avatar-initials">U</div>
+                    <div class="user-info">
+                        <span class="user-name" id="profile-name">Carregando...</span>
+                        <span class="user-role" id="profile-role">Carregando...</span>
+                    </div>
+                </div>
+                <div class="footer-buttons" style="display: flex; gap: 8px;">
+                    <button id="btn-profile" class="btn-logout" title="Minha Conta">
+                        <i class="fa-solid fa-user-gear"></i>
+                    </button>
+                    <button id="btn-logout" class="btn-logout" title="Sair do Sistema">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Área de Conteúdo Principal -->
+        <main class="main-content">
+            <!-- Topbar / Header Superior -->
+            <header class="top-header">
+                <div class="header-title">
+                    <h2 id="current-view-title">Dashboard</h2>
+                </div>
+                <div class="header-actions">
+                    <div class="theme-toggle" id="theme-toggle-btn" title="Alternar Tema">
+                        <i class="fa-solid fa-moon"></i>
+                    </div>
+                    <div class="date-display" id="date-display">
+                        21 de Maio de 2026
+                    </div>
+                </div>
+            </header>
+
+            <!-- Conteúdo Dinâmico (Subviews) -->
+            <div class="content-scrollable">
+                
+                <!-- SUBVIEW: DASHBOARD -->
+                <div id="subview-dashboard" class="subview active">
+                    <!-- Cards de Métricas -->
+                    <div class="metrics-grid">
+                        <div class="metric-card gradient-blue" id="card-my-demands">
+                            <div class="metric-icon"><i class="fa-solid fa-clipboard-list"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Minhas Demandas</span>
+                                <h3 class="metric-value" id="dash-my-count">0</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card gradient-red" id="card-critical-urgency">
+                            <div class="metric-icon"><i class="fa-solid fa-triangle-exclamation"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Urgência Crítica (< 24h)</span>
+                                <h3 class="metric-value" id="dash-critical-count">0</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card gradient-yellow" id="card-warning-urgency">
+                            <div class="metric-icon"><i class="fa-solid fa-clock"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Prazo Alerta (< 72h)</span>
+                                <h3 class="metric-value" id="dash-warning-count">0</h3>
+                            </div>
+                        </div>
+                        <div class="metric-card gradient-green" id="card-completed-demands">
+                            <div class="metric-icon"><i class="fa-solid fa-circle-check"></i></div>
+                            <div class="metric-info">
+                                <span class="metric-label">Total Concluídas</span>
+                                <h3 class="metric-value" id="dash-completed-count">0</h3>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Layout em Duas Colunas do Dashboard -->
+                    <div class="dashboard-layout">
+                        <!-- Coluna 1: Prazos Críticos (Prioridade Máxima) -->
+                        <div class="dash-column panel-left">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-hourglass-half font-red"></i> Demandas Próximas do Vencimento</h3>
+                                <span class="badge badge-red" id="dash-urgent-badge">0 Críticas</span>
+                            </div>
+                            <div class="panel-body">
+                                <div class="urgent-demands-list" id="dash-urgent-list">
+                                    <!-- Demandas urgentes renderizadas via JS -->
+                                    <div class="loading-spinner"><i class="fa-solid fa-circle-notch fa-spin"></i> Carregando...</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Métricas Visuais e Gráficos -->
+                        <div class="dash-column panel-right">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-chart-column font-blue"></i> Visão Geral das Demandas</h3>
+                            </div>
+                            <div class="panel-body chart-panel">
+                                <div class="chart-container">
+                                    <canvas id="demandsChart"></canvas>
+                                </div>
+                                <div class="chart-container">
+                                    <canvas id="responsiblesChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: DEMANDAS (LISTAGEM E BUSCA) -->
+                <div id="subview-demands" class="subview">
+                    <div class="filter-bar">
+                        <div class="search-input">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="demands-search" placeholder="Buscar por Processo, ProData, Paciente, Título ou Responsável...">
+                        </div>
+                        <div class="filter-select">
+                            <select id="demands-filter-status">
+                                <option value="">Todos os Status Ativos</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Atrasado">Atrasado</option>
+                            </select>
+                        </div>
+                        <div class="filter-select">
+                            <select id="demands-filter-urgency">
+                                <option value="">Todas as Urgências</option>
+                                <option value="critical">Crítica (< 24h)</option>
+                                <option value="warning">Alerta (< 72h)</option>
+                                <option value="normal">Normal (> 72h)</option>
+                            </select>
+                        </div>
+                        <div class="filter-toggle">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="demands-filter-my">
+                                <span class="checkmark"></span>
+                                Atribuídas a mim
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="demands-list-container">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable" data-sort="process_number">Processo / ProData <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="patient_name">Paciente <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="title">Título da Demanda <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="deadline">Prazo Restante <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="current_name">Responsável <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable" data-sort="status">Status <i class="fa-solid fa-sort"></i></th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="demands-table-body">
+                                    <!-- Renderizado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="demands-empty-state" class="empty-state hidden">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>Nenhuma demanda judicial encontrada para os filtros aplicados.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: DEMANDAS CONCLUÍDAS -->
+                <div id="subview-completed" class="subview">
+                    <div class="filter-bar">
+                        <div class="search-input">
+                            <i class="fa-solid fa-magnifying-glass"></i>
+                            <input type="text" id="completed-search" placeholder="Buscar por Processo, ProData, Paciente, Título ou Responsável...">
+                        </div>
+                        <div class="filter-toggle">
+                            <label class="checkbox-container">
+                                <input type="checkbox" id="completed-filter-my">
+                                <span class="checkmark"></span>
+                                Atribuídas a mim
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="demands-list-container">
+                        <div class="table-responsive">
+                            <table class="data-table">
+                                <thead>
+                                    <tr>
+                                        <th class="sortable-completed" data-sort="process_number">Processo / ProData <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable-completed" data-sort="patient_name">Paciente <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable-completed" data-sort="title">Título da Demanda <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable-completed" data-sort="deadline">Prazo <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable-completed" data-sort="current_name">Responsável <i class="fa-solid fa-sort"></i></th>
+                                        <th class="sortable-completed" data-sort="status">Status <i class="fa-solid fa-sort"></i></th>
+                                        <th>Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="completed-table-body">
+                                    <!-- Renderizado dinamicamente -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="completed-empty-state" class="empty-state hidden">
+                            <i class="fa-solid fa-folder-open"></i>
+                            <p>Nenhuma demanda concluída encontrada.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: NOVA DEMANDA -->
+                <div id="subview-new-demand" class="subview">
+                    <div class="form-container">
+                        <form id="new-demand-form">
+                            <!-- Seção 1: Seleção / Cadastro do Paciente -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <span class="number">1</span>
+                                    <h3>Informações do Paciente</h3>
+                                </div>
+                                <div class="patient-selection-container">
+                                    <div class="input-group">
+                                        <label for="demand-patient-search"><i class="fa-solid fa-search"></i> Pesquisar Paciente Cadastrado</label>
+                                        <div class="search-select-wrapper">
+                                            <input type="text" id="demand-patient-search" placeholder="Digite o nome ou CPF para buscar..." autocomplete="off">
+                                            <button type="button" id="btn-quick-new-patient" class="btn btn-secondary-light">
+                                                <i class="fa-solid fa-plus"></i> Novo Paciente
+                                            </button>
+                                            <div id="patient-search-results" class="search-dropdown hidden"></div>
+                                        </div>
+                                        <input type="hidden" id="selected-patient-id" required>
+                                    </div>
+                                    <!-- Card do Paciente Selecionado -->
+                                    <div id="selected-patient-card" class="selected-entity-card hidden">
+                                        <div class="card-details">
+                                            <h4 id="sel-patient-name">Nome do Paciente</h4>
+                                            <div class="card-meta">
+                                                <span><strong>CPF:</strong> <span id="sel-patient-cpf">-</span></span>
+                                                <span><strong>CNS:</strong> <span id="sel-patient-cns">-</span></span>
+                                                <span><strong>Mãe:</strong> <span id="sel-patient-mother">-</span></span>
+                                                <span><strong>Nascimento:</strong> <span id="sel-patient-birth">-</span></span>
+                                            </div>
+                                        </div>
+                                        <button type="button" id="btn-clear-patient" class="btn-clear" title="Remover seleção"><i class="fa-solid fa-xmark"></i></button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Seção 2: Detalhes do Processo -->
+                            <div class="form-section">
+                                <div class="section-title">
+                                    <span class="number">2</span>
+                                    <h3>Detalhes do Processo Judicial e Demanda</h3>
+                                </div>
+                                <div class="form-grid">
+                                    <div class="input-group col-6">
+                                        <label for="demand-process-number"><i class="fa-solid fa-hashtag"></i> Número do Processo Judicial</label>
+                                        <input type="text" id="demand-process-number" placeholder="Ex: 5001234-56.2026.8.21.0001" required>
+                                    </div>
+                                    <div class="input-group col-6">
+                                        <label for="demand-prodata-number"><i class="fa-solid fa-database"></i> Código do Sistema ProData</label>
+                                        <input type="text" id="demand-prodata-number" placeholder="Ex: 2026.990.101">
+                                    </div>
+                                    <div class="input-group col-6">
+                                        <label for="demand-judge"><i class="fa-solid fa-gavel"></i> Juiz Assinante</label>
+                                        <input type="text" id="demand-judge" placeholder="Ex: Dr. Roberto Sobrinho" required>
+                                    </div>
+                                    <div class="input-group col-6">
+                                        <label for="demand-responsible"><i class="fa-solid fa-user-tag"></i> Responsável Inicial</label>
+                                        <select id="demand-responsible" required>
+                                            <!-- Populado via JS -->
+                                        </select>
+                                    </div>
+                                    <div class="input-group col-12">
+                                        <label for="demand-title"><i class="fa-solid fa-heading"></i> Resumo/Título da Demanda</label>
+                                        <input type="text" id="demand-title" placeholder="Ex: Medicamento Alfa para tratamento cardíaco" required>
+                                    </div>
+                                    <div class="input-group col-12">
+                                        <label for="demand-description"><i class="fa-solid fa-align-left"></i> Descrição da Decisão / Providências</label>
+                                        <textarea id="demand-description" rows="4" placeholder="Descreva os detalhes da liminar, dosagem do medicamento, prazo dado pelo juiz, multas, etc."></textarea>
+                                    </div>
+                                    <div class="input-group col-6">
+                                        <label for="demand-received-at"><i class="fa-solid fa-calendar-check"></i> Data e Horário de Recebimento</label>
+                                        <input type="datetime-local" id="demand-received-at" required>
+                                    </div>
+                                    <div class="input-group col-3">
+                                        <label for="demand-duration-days"><i class="fa-solid fa-calendar-day"></i> Prazo (Dias)</label>
+                                        <input type="number" id="demand-duration-days" min="0" value="0">
+                                    </div>
+                                    <div class="input-group col-3">
+                                        <label for="demand-duration-hours"><i class="fa-solid fa-hourglass-half"></i> Prazo (Horas)</label>
+                                        <input type="number" id="demand-duration-hours" min="0" value="0">
+                                    </div>
+                                    <div class="input-group col-12">
+                                        <label for="demand-deadline"><i class="fa-solid fa-calendar-times"></i> Prazo Limite Calculado (Inalterável)</label>
+                                        <input type="datetime-local" id="demand-deadline" readonly required>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="form-actions">
+                                <button type="button" class="btn btn-secondary" onclick="switchView('demands')">Cancelar</button>
+                                <button type="submit" class="btn btn-primary">Cadastrar Demanda <i class="fa-solid fa-check"></i></button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: PACIENTES (CADASTRO E LISTAGEM) -->
+                <div id="subview-patients" class="subview">
+                    <div class="patients-layout">
+                        <!-- Formulário de cadastro de paciente -->
+                        <div class="patient-form-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-user-plus font-blue"></i> Cadastrar Paciente</h3>
+                            </div>
+                            <div class="panel-body">
+                                <form id="new-patient-form">
+                                    <div class="input-group">
+                                        <label for="pat-name"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                                        <input type="text" id="pat-name" placeholder="Nome do paciente" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="pat-cpf"><i class="fa-solid fa-id-card"></i> CPF</label>
+                                        <input type="text" id="pat-cpf" placeholder="000.000.000-00">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="pat-cns"><i class="fa-solid fa-address-card"></i> CNS (Cartão Nacional de Saúde)</label>
+                                        <input type="text" id="pat-cns" placeholder="000 0000 0000 0000">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="pat-mother"><i class="fa-solid fa-person-breastfeeding"></i> Nome da Mãe</label>
+                                        <input type="text" id="pat-mother" placeholder="Nome da mãe do paciente">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="pat-birth"><i class="fa-solid fa-calendar"></i> Data de Nascimento</label>
+                                        <input type="date" id="pat-birth">
+                                    </div>
+                                    <button type="submit" class="btn btn-primary btn-block">Salvar Paciente <i class="fa-solid fa-save"></i></button>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Lista de pacientes cadastrados -->
+                        <div class="patient-list-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-users font-blue"></i> Pacientes Cadastrados</h3>
+                                <div class="search-input compact">
+                                    <i class="fa-solid fa-magnifying-glass"></i>
+                                    <input type="text" id="patients-list-search" placeholder="Filtrar por nome ou CPF...">
+                                </div>
+                            </div>
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>CPF</th>
+                                                <th>CNS</th>
+                                                <th>Data Nasc.</th>
+                                                <th class="admin-only hidden">Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="patients-table-body">
+                                            <!-- Renderizado dinamicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: USUÁRIOS (ADMIN CRUD) -->
+                <div id="subview-users" class="subview">
+                    <div class="patients-layout">
+                        <!-- Formulário de cadastro/edição de usuário -->
+                        <div class="patient-form-panel">
+                            <div class="panel-header">
+                                <h3 id="user-form-title"><i class="fa-solid fa-user-plus font-blue"></i> Cadastrar Usuário</h3>
+                            </div>
+                            <div class="panel-body">
+                                <form id="user-form">
+                                    <input type="hidden" id="user-id">
+                                    <div class="input-group">
+                                        <label for="user-name-input"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                                        <input type="text" id="user-name-input" placeholder="Nome do usuário" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="user-username-input"><i class="fa-solid fa-circle-user"></i> Login/Usuário</label>
+                                        <input type="text" id="user-username-input" placeholder="Nome de usuário para login" required>
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="user-password-input"><i class="fa-solid fa-lock"></i> Senha</label>
+                                        <input type="password" id="user-password-input" placeholder="Senha (deixe em branco para manter a atual)">
+                                    </div>
+                                    <div class="input-group">
+                                        <label for="user-role-input"><i class="fa-solid fa-user-shield"></i> Perfil/Função</label>
+                                        <select id="user-role-input" required>
+                                            <option value="Admin">Administrador</option>
+                                            <option value="Médico">Médico</option>
+                                            <option value="Advogado">Advogado</option>
+                                        </select>
+                                    </div>
+                                    <div style="display: flex; gap: 8px;">
+                                        <button type="submit" class="btn btn-primary" style="flex: 1;">Salvar <i class="fa-solid fa-save"></i></button>
+                                        <button type="button" id="btn-cancel-user-edit" class="btn btn-secondary hidden" style="flex: 1;">Cancelar</button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
+                        <!-- Lista de usuários cadastrados -->
+                        <div class="patient-list-panel">
+                            <div class="panel-header">
+                                <h3><i class="fa-solid fa-users font-blue"></i> Usuários do Sistema</h3>
+                            </div>
+                            <div class="panel-body">
+                                <div class="table-responsive">
+                                    <table class="data-table">
+                                        <thead>
+                                            <tr>
+                                                <th>Nome</th>
+                                                <th>Login</th>
+                                                <th>Perfil</th>
+                                                <th>Ações</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody id="users-table-body">
+                                            <!-- Renderizado dinamicamente -->
+                                        </tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: DETALHES DA DEMANDA -->
+                <div id="subview-demand-details" class="subview">
+                    <!-- Cabeçalho de Detalhes -->
+                    <div class="details-top-bar">
+                        <button class="btn btn-secondary-light" onclick="switchView('demands')">
+                            <i class="fa-solid fa-arrow-left"></i> Voltar para Lista
+                        </button>
+                        <div class="detail-header-actions">
+                            <!-- Ação de alterar status -->
+                            <div class="action-select-wrapper">
+                                <label for="detail-status-select"><i class="fa-solid fa-signal"></i> Status:</label>
+                                <select id="detail-status-select" class="select-premium">
+                                    <option value="Pendente">Pendente</option>
+                                    <option value="Em Andamento">Em Andamento</option>
+                                    <option value="Concluído">Concluído</option>
+                                    <option value="Atrasado">Atrasado</option>
+                                </select>
+                            </div>
+                            <!-- Ação de encaminhar -->
+                            <div class="action-select-wrapper">
+                                <label for="detail-forward-select"><i class="fa-solid fa-share"></i> Encaminhar para:</label>
+                                <select id="detail-forward-select" class="select-premium">
+                                    <!-- Populado via JS -->
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Grid de Informações da Demanda -->
+                    <div class="details-grid">
+                        
+                        <!-- Coluna 1: Informações e Metadados -->
+                        <div class="details-column-left">
+                            <div class="detail-card info-card">
+                                <div class="card-badge-header">
+                                    <span class="badge" id="det-status-badge">Pendente</span>
+                                    <span class="badge" id="det-deadline-badge">Vence em 2h</span>
+                                </div>
+                                <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px;">
+                                    <h2 id="det-title" style="margin-bottom: 0; flex-grow: 1;">Medicamento Alfa para tratamento cardíaco</h2>
+                                    <button id="btn-edit-demand" class="btn btn-secondary-light btn-sm hidden" style="margin-left: 10px;">
+                                        <i class="fa-solid fa-pen"></i> Editar Demanda
+                                    </button>
+                                    <button id="btn-delete-demand" class="btn btn-danger-light btn-sm admin-only hidden" style="margin-left: 10px;">
+                                        <i class="fa-solid fa-trash"></i> Excluir Processo
+                                    </button>
+                                </div>
+                                <p class="det-desc" id="det-description">Descrição detalhada...</p>
+                                
+                                <div class="info-item-grid">
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-hashtag"></i> Nº Processo Judicial</span>
+                                        <span class="info-value text-copyable" id="det-process-number">5001234-56.2026.8.21.0001</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-database"></i> Código ProData</span>
+                                        <span class="info-value text-copyable" id="det-prodata-number">PD-2026-9901</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-gavel"></i> Juiz Assinante</span>
+                                        <span class="info-value font-semibold text-copyable" id="det-judge">-</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-calendar-check"></i> Data de Recebimento</span>
+                                        <span class="info-value text-copyable" id="det-received-at">-</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-calendar-days"></i> Data Limite</span>
+                                        <span class="info-value font-semibold" id="det-deadline-date">21/05/2026 23:59</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-user-tie"></i> Responsável Atual</span>
+                                        <span class="info-value font-semibold font-blue" id="det-current-responsible">Lucas Ribeiro</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-user-pen"></i> Criado por</span>
+                                        <span class="info-value" id="det-creator">Administrador</span>
+                                    </div>
+                                    <div class="info-item">
+                                        <span class="info-label"><i class="fa-solid fa-calendar-plus"></i> Data de Criação</span>
+                                        <span class="info-value" id="det-created-at">21/05/2026 10:00</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Card do Paciente Vinculado -->
+                            <div class="detail-card patient-card">
+                                <h3><i class="fa-solid fa-hospital-user font-blue"></i> Informações do Paciente</h3>
+                                <div class="patient-info-layout">
+                                    <div class="info-item-grid">
+                                        <div class="info-item col-12">
+                                            <span class="info-label">Nome Completo</span>
+                                            <span class="info-value font-semibold font-large" id="det-patient-name">João da Silva</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">CPF</span>
+                                            <span class="info-value text-copyable" id="det-patient-cpf">123.456.789-00</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">CNS (Cartão SUS)</span>
+                                            <span class="info-value text-copyable" id="det-patient-cns">898001234567890</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Nome da Mãe</span>
+                                            <span class="info-value" id="det-patient-mother">Maria da Silva</span>
+                                        </div>
+                                        <div class="info-item">
+                                            <span class="info-label">Data Nascimento (Idade)</span>
+                                            <span class="info-value" id="det-patient-birth">15/05/1985 (41 anos)</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Coluna 2: Timeline de Histórico e Observações -->
+                        <div class="details-column-right">
+                            <!-- Abas para alternar entre Observações e Histórico -->
+                            <div class="tab-container">
+                                <button class="tab-btn active" data-tab="comments">
+                                    <i class="fa-solid fa-comments"></i> Observações (<span id="det-comments-count">0</span>)
+                                </button>
+                                <button class="tab-btn" data-tab="history">
+                                    <i class="fa-solid fa-history"></i> Histórico de Ações
+                                </button>
+                            </div>
+
+                            <div class="tab-content-wrapper">
+                                <!-- CONTEÚDO TAB: OBSERVAÇÕES -->
+                                <div class="tab-panel active" id="tab-comments">
+                                    <!-- Adicionar comentário -->
+                                    <form id="add-comment-form" class="comment-input-form">
+                                        <textarea id="comment-text" rows="3" placeholder="Adicione uma nova observação ou andamento sobre esta demanda..." required></textarea>
+                                        <button type="submit" class="btn btn-primary btn-sm">
+                                            Adicionar Nota <i class="fa-solid fa-paper-plane"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Lista de Observações -->
+                                    <div class="comments-list" id="det-comments-list">
+                                        <!-- Renderizado via JS -->
+                                    </div>
+                                </div>
+
+                                <!-- CONTEÚDO TAB: HISTÓRICO -->
+                                <div class="tab-panel" id="tab-history">
+                                    <div class="timeline" id="det-history-timeline">
+                                        <!-- Linha do tempo renderizada via JS -->
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- SUBVIEW: RELATÓRIOS -->
+                <div id="subview-reports" class="subview">
+                    <div class="filter-bar reports-filter-bar">
+                        <div class="filter-select">
+                            <label for="report-type-select">Tipo de Relatório</label>
+                            <select id="report-type-select">
+                                <option value="general">Geral de Demandas</option>
+                                <option value="deadlines">Prazos e Alertas</option>
+                                <option value="audit">Auditoria e Histórico</option>
+                            </select>
+                        </div>
+                        <div class="filter-select">
+                            <label for="report-start-date">Data Inicial</label>
+                            <input type="date" id="report-start-date">
+                        </div>
+                        <div class="filter-select">
+                            <label for="report-end-date">Data Final</label>
+                            <input type="date" id="report-end-date">
+                        </div>
+                        <div class="filter-select" id="report-user-filter-wrapper">
+                            <label for="report-user-select">Responsável</label>
+                            <select id="report-user-select">
+                                <option value="">Todos</option>
+                            </select>
+                        </div>
+                        <div class="filter-select" id="report-status-filter-wrapper">
+                            <label for="report-status-select">Status</label>
+                            <select id="report-status-select">
+                                <option value="">Todos</option>
+                                <option value="Pendente">Pendente</option>
+                                <option value="Em Andamento">Em Andamento</option>
+                                <option value="Concluído">Concluído</option>
+                                <option value="Atrasado">Atrasado</option>
+                            </select>
+                        </div>
+                        <div class="report-actions-wrapper">
+                            <button type="button" id="btn-generate-report" class="btn btn-primary">
+                                <i class="fa-solid fa-filter"></i> Gerar
+                            </button>
+                            <button type="button" id="btn-print-report" class="btn btn-secondary-light">
+                                <i class="fa-solid fa-print"></i> Imprimir
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="report-results-container card" id="report-results-panel">
+                        <div class="report-header-preview print-only" id="report-print-header">
+                            <div class="report-print-logo">
+                                <i class="fa-solid fa-scale-balanced"></i> JurisFlow
+                            </div>
+                            <div class="report-print-info">
+                                <h2 id="report-print-title">Relatório Geral de Demandas</h2>
+                                <p id="report-print-meta">Gerado em: --/--/---- | Filtros aplicados: ---</p>
+                            </div>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="data-table report-data-table" id="report-table">
+                                <thead id="report-table-head">
+                                    <!-- Dinâmico -->
+                                </thead>
+                                <tbody id="report-table-body">
+                                    <!-- Dinâmico -->
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="report-empty-state" class="empty-state">
+                            <i class="fa-solid fa-file-excel"></i>
+                            <p>Utilize os filtros acima e clique em "Gerar" para visualizar o relatório.</p>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- ==========================================
+         3. MODAL DE CADASTRO RÁPIDO DE PACIENTE
+         ========================================== -->
+    <div id="patient-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus font-blue"></i> Cadastro Rápido de Paciente</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-patient-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="quick-patient-form">
+                    <div class="input-group">
+                        <label for="quick-pat-name"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                        <input type="text" id="quick-pat-name" placeholder="Nome do paciente" required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group col-6">
+                            <label for="quick-pat-cpf"><i class="fa-solid fa-id-card"></i> CPF</label>
+                            <input type="text" id="quick-pat-cpf" placeholder="000.000.000-00">
+                        </div>
+                        <div class="input-group col-6">
+                            <label for="quick-pat-cns"><i class="fa-solid fa-address-card"></i> CNS</label>
+                            <input type="text" id="quick-pat-cns" placeholder="000 0000 0000 0000">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="quick-pat-mother"><i class="fa-solid fa-person-breastfeeding"></i> Nome da Mãe</label>
+                        <input type="text" id="quick-pat-mother" placeholder="Nome da mãe do paciente">
+                    </div>
+                    <div class="input-group">
+                        <label for="quick-pat-birth"><i class="fa-solid fa-calendar"></i> Data de Nascimento</label>
+                        <input type="date" id="quick-pat-birth">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-patient-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Paciente <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         4. MODAL DE EDIÇÃO DE PACIENTE (ADMIN)
+         ========================================== -->
+    <div id="edit-patient-modal" class="modal-overlay hidden">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-pen font-blue"></i> Editar Cadastro de Paciente</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-edit-patient-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-patient-form">
+                    <input type="hidden" id="edit-pat-id">
+                    <div class="input-group">
+                        <label for="edit-pat-name"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                        <input type="text" id="edit-pat-name" placeholder="Nome do paciente" required>
+                    </div>
+                    <div class="form-grid">
+                        <div class="input-group col-6">
+                            <label for="edit-pat-cpf"><i class="fa-solid fa-id-card"></i> CPF</label>
+                            <input type="text" id="edit-pat-cpf" placeholder="000.000.000-00">
+                        </div>
+                        <div class="input-group col-6">
+                            <label for="edit-pat-cns"><i class="fa-solid fa-address-card"></i> CNS</label>
+                            <input type="text" id="edit-pat-cns" placeholder="000 0000 0000 0000">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-pat-mother"><i class="fa-solid fa-person-breastfeeding"></i> Nome da Mãe</label>
+                        <input type="text" id="edit-pat-mother" placeholder="Nome da mãe do paciente">
+                    </div>
+                    <div class="input-group">
+                        <label for="edit-pat-birth"><i class="fa-solid fa-calendar"></i> Data de Nascimento</label>
+                        <input type="date" id="edit-pat-birth">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-edit-patient-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         5. MODAL DE CONFIRMAÇÃO DE ENCAMINHAMENTO
+         ========================================== -->
+    <div id="confirm-modal" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-circle-question font-yellow"></i> Confirmar Encaminhamento</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-confirm-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <p id="confirm-modal-message" style="font-size: 0.95rem; line-height: 1.5; color: var(--text-secondary);"></p>
+                <div class="modal-actions" style="margin-top: 25px;">
+                    <button type="button" class="btn btn-secondary" id="btn-cancel-confirm-modal">Cancelar</button>
+                    <button type="button" class="btn btn-primary" id="btn-ok-confirm-modal">Confirmar <i class="fa-solid fa-check"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         6. MODAL DE EDIÇÃO DE DEMANDA
+         ========================================== -->
+    <div id="edit-demand-modal" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-folder-open font-blue"></i> Editar Demanda Judicial</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-edit-demand-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="edit-demand-form">
+                    <input type="hidden" id="edit-demand-id">
+                    
+                    <!-- Informações do Paciente -->
+                    <div class="input-group">
+                        <label for="edit-demand-patient-search"><i class="fa-solid fa-search"></i> Pesquisar Paciente</label>
+                        <div class="search-select-wrapper">
+                            <input type="text" id="edit-demand-patient-search" placeholder="Digite o nome ou CPF para buscar..." autocomplete="off">
+                            <div id="edit-patient-search-results" class="search-dropdown hidden"></div>
+                        </div>
+                        <input type="hidden" id="edit-selected-patient-id" required>
+                    </div>
+                    <!-- Card do Paciente Selecionado -->
+                    <div id="edit-selected-patient-card" class="selected-entity-card hidden" style="margin-bottom: 15px;">
+                        <div class="card-details">
+                            <h4 id="edit-sel-patient-name">Nome do Paciente</h4>
+                            <div class="card-meta">
+                                <span><strong>CPF:</strong> <span id="edit-sel-patient-cpf">-</span></span>
+                            </div>
+                        </div>
+                        <button type="button" id="btn-edit-clear-patient" class="btn-clear" title="Remover seleção"><i class="fa-solid fa-xmark"></i></button>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="input-group col-6">
+                            <label for="edit-demand-process-number"><i class="fa-solid fa-hashtag"></i> Número do Processo Judicial</label>
+                            <input type="text" id="edit-demand-process-number" required>
+                        </div>
+                        <div class="input-group col-6">
+                            <label for="edit-demand-prodata-number"><i class="fa-solid fa-database"></i> Código do Sistema ProData</label>
+                            <input type="text" id="edit-demand-prodata-number">
+                        </div>
+                        <div class="input-group col-6">
+                            <label for="edit-demand-judge"><i class="fa-solid fa-gavel"></i> Juiz Assinante</label>
+                            <input type="text" id="edit-demand-judge" required>
+                        </div>
+                        <div class="input-group col-12">
+                            <label for="edit-demand-title"><i class="fa-solid fa-heading"></i> Resumo/Título da Demanda</label>
+                            <input type="text" id="edit-demand-title" required>
+                        </div>
+                        <div class="input-group col-12">
+                            <label for="edit-demand-description"><i class="fa-solid fa-align-left"></i> Descrição da Decisão / Providências</label>
+                            <textarea id="edit-demand-description" rows="4"></textarea>
+                        </div>
+                        <div class="input-group col-6">
+                            <label for="edit-demand-received-at"><i class="fa-solid fa-calendar-check"></i> Data e Horário de Recebimento</label>
+                            <input type="datetime-local" id="edit-demand-received-at" required>
+                        </div>
+                        <div class="input-group col-3">
+                            <label for="edit-demand-duration-days"><i class="fa-solid fa-calendar-day"></i> Prazo (Dias)</label>
+                            <input type="number" id="edit-demand-duration-days" min="0" value="0">
+                        </div>
+                        <div class="input-group col-3">
+                            <label for="edit-demand-duration-hours"><i class="fa-solid fa-hourglass-half"></i> Prazo (Horas)</label>
+                            <input type="number" id="edit-demand-duration-hours" min="0" value="0">
+                        </div>
+                        <div class="input-group col-12">
+                            <label for="edit-demand-deadline"><i class="fa-solid fa-calendar-times"></i> Prazo Limite Calculado</label>
+                            <input type="datetime-local" id="edit-demand-deadline" readonly required>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-edit-demand-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar Alterações <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- ==========================================
+         7. MODAL DE PERFIL DO USUÁRIO (MINHA CONTA)
+         ========================================== -->
+    <div id="profile-modal" class="modal-overlay hidden">
+        <div class="modal-card" style="max-width: 450px;">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-gear font-blue"></i> Minha Conta</h3>
+                <button type="button" class="btn-close-modal" id="btn-close-profile-modal"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="modal-body">
+                <form id="profile-form">
+                    <div class="input-group">
+                        <label for="profile-name-input"><i class="fa-solid fa-user"></i> Nome Completo</label>
+                        <input type="text" id="profile-name-input" required>
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-username-input"><i class="fa-solid fa-circle-user"></i> Usuário/Login (Inalterável)</label>
+                        <input type="text" id="profile-username-input" readonly disabled style="opacity: 0.6; cursor: not-allowed;">
+                    </div>
+                    <div class="input-group">
+                        <label for="profile-password-input"><i class="fa-solid fa-lock"></i> Nova Senha</label>
+                        <input type="password" id="profile-password-input" placeholder="Deixe em branco para manter a atual">
+                    </div>
+                    <div class="modal-actions">
+                        <button type="button" class="btn btn-secondary" id="btn-cancel-profile-modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar Perfil <i class="fa-solid fa-check"></i></button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Script -->
+    <script src="app.js"></script>
+</body>
+</html>
