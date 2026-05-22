@@ -2,8 +2,20 @@ const bcrypt = require('bcryptjs');
 const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require('./database');
 
 async function seed() {
-  // Inicializar o banco primeiro
-  await initDb({ force: true });
+  // Inicializar o banco primeiro (não forçar em produção)
+  await initDb();
+
+  // Se já existirem usuários, presumimos que o banco já foi populado — pular seeding.
+  try {
+    const existing = await User.count();
+    if (existing && existing > 0) {
+      console.log('Seed pulado: o banco já contém dados.');
+      process.exit(0);
+    }
+  } catch (err) {
+    console.error('Erro ao verificar dados existentes:', err);
+    // prosseguir para tentar popular caso a verificação falhe
+  }
 
   console.log("Cadastrando usuários de teste...");
   const salt = await bcrypt.genSalt(10);
