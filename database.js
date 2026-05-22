@@ -1,6 +1,7 @@
 const { Sequelize, DataTypes } = require('sequelize');
 require('dotenv').config();
 
+const DATABASE_URL = process.env.DATABASE_URL || '';
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
 const DB_NAME = process.env.DB_NAME || 'controle_demandas';
@@ -8,10 +9,8 @@ const DB_USER = process.env.DB_USER || 'postgres';
 const DB_PASSWORD = process.env.DB_PASSWORD || '';
 const DB_SSL = String(process.env.DB_SSL || '').toLowerCase() === 'true';
 
-const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+const commonOptions = {
   dialect: 'postgres',
-  host: DB_HOST,
-  port: DB_PORT,
   logging: false,
   define: {
     timestamps: false
@@ -24,7 +23,15 @@ const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
         }
       }
     : undefined
-});
+};
+
+const sequelize = DATABASE_URL
+  ? new Sequelize(DATABASE_URL, commonOptions)
+  : new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+      ...commonOptions,
+      host: DB_HOST,
+      port: DB_PORT
+    });
 
 // 1. Modelo de Usuários
 const User = sequelize.define('User', {

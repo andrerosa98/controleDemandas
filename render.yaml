@@ -1,0 +1,27 @@
+databases:
+  - name: controle-demandas-db
+    databaseName: controle_demandas
+    user: controle_demandas_user
+    postgresMajorVersion: "16"
+    plan: free
+
+services:
+  - type: web
+    name: controle-demandas
+    runtime: node
+    plan: starter
+    buildCommand: npm install
+    startCommand: npm start
+    initialDeployHook: npm run seed
+    healthCheckPath: /
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_SSL
+        value: "true"
+      - key: DATABASE_URL
+        fromDatabase:
+          name: controle-demandas-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true

@@ -59,6 +59,20 @@ Para uso real, a combinação mais simples é:
 - Restrinja `CORS_ORIGIN` ao domínio público do app.
 - Mantenha `NODE_ENV=production` no deploy.
 
+### Deploy no Render
+Este repositório já inclui um Blueprint em `render.yaml` para criar o app e o banco PostgreSQL juntos.
+
+Passo a passo:
+1. Envie o código para o GitHub.
+2. No Render, clique em `New` > `Blueprint`.
+3. Conecte o repositório deste projeto.
+4. O Render vai ler o `render.yaml`, criar o banco PostgreSQL e o serviço web.
+5. Aguarde o primeiro deploy e a execução automática do `npm run seed`.
+
+Observação:
+- O `JWT_SECRET` é gerado automaticamente pelo Render.
+- O backend usa `DATABASE_URL` no Render e continua compatível com `.env` local.
+
 ## Usuários de Teste Pré-Cadastrados
 
 | Usuário | Senha | Nome Completo | Perfil |
