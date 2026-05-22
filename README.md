@@ -72,6 +72,7 @@ Passo a passo:
 Observação:
 - Render geralmente pode gerar um segredo automaticamente, mas confirme que a variável `JWT_SECRET` definida no serviço tem pelo menos 32 caracteres. Se o deploy falhar com erro sobre `JWT_SECRET` (ex.: "JWT_SECRET deve ser definido com pelo menos 32 caracteres em produção."), crie a variável manualmente no painel do serviço.
 - O backend usa `DATABASE_URL` no Render e continua compatível com `.env` local.
+- Se o Render demorar para subir o banco e o serviço mostrar `ECONNREFUSED`, o app agora tenta reconectar automaticamente algumas vezes antes de falhar. Se ainda assim precisar, você pode aumentar `DB_RETRY_ATTEMPTS` e `DB_RETRY_DELAY_MS` no serviço.
 
 Como gerar um `JWT_SECRET` forte (use um dos comandos abaixo e cole o resultado como o valor da variável `JWT_SECRET` no painel do Render):
 

@@ -8,6 +8,8 @@ const DB_NAME = process.env.DB_NAME || 'controle_demandas';
 const DB_USER = process.env.DB_USER || 'postgres';
 const DB_PASSWORD = process.env.DB_PASSWORD || '';
 const DB_SSL = String(process.env.DB_SSL || '').toLowerCase() === 'true';
+const DB_RETRY_ATTEMPTS = process.env.DB_RETRY_ATTEMPTS ? Number(process.env.DB_RETRY_ATTEMPTS) : 10;
+const DB_RETRY_DELAY_MS = process.env.DB_RETRY_DELAY_MS ? Number(process.env.DB_RETRY_DELAY_MS) : 3000;
 
 const commonOptions = {
   dialect: 'postgres',
@@ -117,18 +119,32 @@ AuditLog.belongsTo(Demand, { foreignKey: 'demand_id' });
 
 // Inicialização das tabelas
 async function initDb(options = {}) {
-  try {
-    await sequelize.authenticate();
-    console.log('Conexão com PostgreSQL estabelecida com sucesso.');
-    await sequelize.sync({
-      force: Boolean(options.force),
-      alter: Boolean(options.alter)
-    });
-    console.log('Modelos sincronizados com o banco de dados.');
-  } catch (error) {
-    console.error('Erro ao conectar ou sincronizar o banco de dados:', error);
-    throw error;
+  const attempts = Math.max(1, Number(options.retryAttempts || DB_RETRY_ATTEMPTS));
+  const delayMs = Math.max(0, Number(options.retryDelayMs || DB_RETRY_DELAY_MS));
+
+  let lastError;
+
+  for (let attempt = 1; attempt <= attempts; attempt += 1) {
+    try {
+      await sequelize.authenticate();
+      console.log('Conexão com PostgreSQL estabelecida com sucesso.');
+      await sequelize.sync({
+        force: Boolean(options.force),
+        alter: Boolean(options.alter)
+      });
+      console.log('Modelos sincronizados com o banco de dados.');
+      return;
+    } catch (error) {
+      lastError = error;
+      console.error(`Erro ao conectar ou sincronizar o banco de dados (tentativa ${attempt}/${attempts}):`, error);
+
+      if (attempt < attempts) {
+        await new Promise(resolve => setTimeout(resolve, delayMs));
+      }
+    }
   }
+
+  throw lastError;
 }
 
 module.exports = {
