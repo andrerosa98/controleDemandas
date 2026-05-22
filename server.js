@@ -1140,17 +1140,22 @@ app.put('/api/comments/:id', tokenRequired, async (req, res) => {
 
 // Inicialização do Banco de Dados e Execução do Servidor
 async function startServer() {
-  await initDb();
+  try {
+    await initDb();
 
-  const userCount = await User.count();
-  if (userCount === 0) {
-    console.log('Banco vazio detectado. Executando seed inicial...');
-    await seed();
+    const userCount = await User.count();
+    if (userCount === 0) {
+      console.log('Banco vazio detectado. Executando seed inicial...');
+      await seed();
+    }
+
+    app.listen(PORT, '0.0.0.0', () => {
+      console.log(`Servidor rodando em http://localhost:${PORT}`);
+    });
+  } catch (error) {
+    console.error('Falha ao iniciar o servidor:', error);
+    process.exit(1);
   }
-
-  app.listen(PORT, '0.0.0.0', () => {
-    console.log(`Servidor rodando em http://localhost:${PORT}`);
-  });
 }
 
 startServer();
