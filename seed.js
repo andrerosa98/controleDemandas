@@ -3,17 +3,7 @@ const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require(
 
 async function seed() {
   // Inicializar o banco primeiro
-  await initDb();
-  
-  console.log("Limpando dados anteriores...");
-  // Desativa checagem de chaves estrangeiras temporariamente para limpar tabelas com segurança
-  await sequelize.query('PRAGMA foreign_keys = OFF;');
-  await AuditLog.destroy({ where: {}, truncate: true });
-  await Comment.destroy({ where: {}, truncate: true });
-  await Demand.destroy({ where: {}, truncate: true });
-  await Patient.destroy({ where: {}, truncate: true });
-  await User.destroy({ where: {}, truncate: true });
-  await sequelize.query('PRAGMA foreign_keys = ON;');
+  await initDb({ force: true });
 
   console.log("Cadastrando usuários de teste...");
   const salt = await bcrypt.genSalt(10);

@@ -3,6 +3,8 @@ const cors = require('cors');
 const path = require('path');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const { Op } = require('sequelize');
 const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require('./database');
 
@@ -20,10 +22,35 @@ function safeParseDate(val) {
 
 const app = express();
 const PORT = process.env.PORT || 5000;
-const SECRET_KEY = process.env.JWT_SECRET || 'demandas_secret_key_2026';
+const NODE_ENV = process.env.NODE_ENV || 'development';
+const SECRET_KEY = process.env.JWT_SECRET;
+const CORS_ORIGINS = (process.env.CORS_ORIGIN || '').split(',').map(origin => origin.trim()).filter(Boolean);
 
-app.use(cors());
-app.use(express.json());
+if (NODE_ENV === 'production' && (!SECRET_KEY || SECRET_KEY.trim().length < 32)) {
+  throw new Error('JWT_SECRET deve ser definido com pelo menos 32 caracteres em produção.');
+}
+
+app.disable('x-powered-by');
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || CORS_ORIGINS.length === 0 || CORS_ORIGINS.includes(origin)) {
+      return callback(null, true);
+    }
+    return callback(new Error('Origem bloqueada pelo CORS.'));
+  },
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
+app.use(express.json({ limit: '1mb' }));
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 10,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { message: 'Muitas tentativas de login. Tente novamente em 15 minutos.' }
+});
 
 // Servir arquivos estáticos do frontend da pasta 'static'
 app.use(express.static(path.join(__dirname, 'static')));
@@ -47,6 +74,7 @@ function tokenRequired(req, res, next) {
     if (error.name === 'TokenExpiredError') {
       return res.status(401).json({ message: 'Sessão expirada. Por favor, faça login novamente.' });
     }
+    return res.status(401).json({ message: 'Token inválido. Faça login novamente.' });
   }
 }
 
@@ -69,7 +97,7 @@ app.get('/', (req, res) => {
 // ROTAS DE AUTENTICAÇÃO
 // ==========================================
 
-app.post('/api/auth/login', async (req, res) => {
+app.post('/api/auth/login', loginLimiter, async (req, res) => {
   const { username, password } = req.body;
   if (!username || !password) {
     return res.status(400).json({ message: 'Usuário e senha são obrigatórios!' });

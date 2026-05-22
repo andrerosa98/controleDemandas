@@ -884,7 +884,7 @@ function updateDashboardTimers(demandsList) {
         const deadlineStr = el.getAttribute('data-deadline');
         if (!deadlineStr) return;
         
-        const deadline = new Date(deadlineStr.replace(' ', 'T')); // Converter formato SQLite
+        const deadline = new Date(deadlineStr.replace(' ', 'T')); // Converter formato YYYY-MM-DD HH:MM:SS
         const diff = deadline - now;
         const textSpan = el.querySelector('.timer-text');
         

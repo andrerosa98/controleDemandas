@@ -1,15 +1,29 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const path = require('path');
+require('dotenv').config();
 
-const DB_PATH = path.join(__dirname, 'demandas.db');
+const DB_HOST = process.env.DB_HOST || 'localhost';
+const DB_PORT = process.env.DB_PORT ? Number(process.env.DB_PORT) : 5432;
+const DB_NAME = process.env.DB_NAME || 'controle_demandas';
+const DB_USER = process.env.DB_USER || 'postgres';
+const DB_PASSWORD = process.env.DB_PASSWORD || '';
+const DB_SSL = String(process.env.DB_SSL || '').toLowerCase() === 'true';
 
-const sequelize = new Sequelize({
-  dialect: 'sqlite',
-  storage: DB_PATH,
-  logging: false, // Desativa logs de SQL no console para manter limpo
+const sequelize = new Sequelize(DB_NAME, DB_USER, DB_PASSWORD, {
+  dialect: 'postgres',
+  host: DB_HOST,
+  port: DB_PORT,
+  logging: false,
   define: {
-    timestamps: false // Vamos gerenciar created_at manualmente ou deixar default
-  }
+    timestamps: false
+  },
+  dialectOptions: DB_SSL
+    ? {
+        ssl: {
+          require: true,
+          rejectUnauthorized: false
+        }
+      }
+    : undefined
 });
 
 // 1. Modelo de Usuários
@@ -95,12 +109,14 @@ AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 AuditLog.belongsTo(Demand, { foreignKey: 'demand_id' });
 
 // Inicialização das tabelas
-async function initDb() {
+async function initDb(options = {}) {
   try {
     await sequelize.authenticate();
-    console.log('Conexão com SQLite estabelecida com sucesso.');
-    // Sincroniza tabelas no banco (cria caso não existam)
-    await sequelize.sync();
+    console.log('Conexão com PostgreSQL estabelecida com sucesso.');
+    await sequelize.sync({
+      force: Boolean(options.force),
+      alter: Boolean(options.alter)
+    });
     console.log('Modelos sincronizados com o banco de dados.');
   } catch (error) {
     console.error('Erro ao conectar ou sincronizar o banco de dados:', error);

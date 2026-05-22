@@ -4,7 +4,7 @@ O **JurisFlow** é um sistema web-based responsivo e moderno projetado para cont
 
 ## Tecnologias Utilizadas
 * **Backend**: Node.js + Express
-* **ORM & Banco de Dados**: Sequelize com SQLite (`demandas.db`)
+* **ORM & Banco de Dados**: Sequelize com PostgreSQL
 * **Frontend**: HTML5, CSS3 (Vanilla com tema escuro glassmorphic de alta fidelidade e suporte a tema claro), e JavaScript Vanilla (SPA completo com gráficos interativos via Chart.js).
 * **Autenticação**: JSON Web Tokens (JWT) com senhas criptografadas via `bcryptjs`.
 
@@ -21,13 +21,19 @@ O **JurisFlow** é um sistema web-based responsivo e moderno projetado para cont
 ### Pré-requisitos
 Certifique-se de ter o **Node.js** e o **npm** instalados em sua máquina.
 
+### Configuração do Banco
+Copie o arquivo `.env.example` para `.env` e preencha as credenciais do PostgreSQL.
+
+### Variáveis de Produção
+Em produção, defina `NODE_ENV=production`, um `JWT_SECRET` longo e único, e `CORS_ORIGIN` com o domínio público do frontend.
+
 ### Instalação de Dependências
 ```bash
 npm install
 ```
 
-### Inicialização do Banco de Dados (Seed)
-Caso queira repopular o banco de dados com dados iniciais realistas (usuários padrões, pacientes e demandas pré-cadastradas):
+### Execução da Migração/Seed
+O comando abaixo recria o banco do zero e popula os dados iniciais:
 ```bash
 npm run seed
 ```
@@ -37,6 +43,21 @@ npm run seed
 npm run dev
 ```
 O servidor iniciará na porta **5000**. Acesse: **[http://localhost:5000](http://localhost:5000)**
+
+## Deploy Recomendado
+
+Para uso real, a combinação mais simples é:
+
+1. Frontend e backend no mesmo app Node.
+2. Banco PostgreSQL gerenciado no próprio provedor.
+3. Variáveis de ambiente configuradas no painel do provedor.
+
+### Boas práticas mínimas
+- Não comite o arquivo `.env`.
+- Use uma senha forte para o usuário do PostgreSQL.
+- Gere um `JWT_SECRET` longo e aleatório.
+- Restrinja `CORS_ORIGIN` ao domínio público do app.
+- Mantenha `NODE_ENV=production` no deploy.
 
 ## Usuários de Teste Pré-Cadastrados
 
