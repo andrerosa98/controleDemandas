@@ -7,6 +7,7 @@ const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Op } = require('sequelize');
 const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require('./database');
+const { seed } = require('./seed');
 
 // Helper para converter datas com segurança (string ou objeto Date)
 function safeParseDate(val) {
@@ -1140,6 +1141,13 @@ app.put('/api/comments/:id', tokenRequired, async (req, res) => {
 // Inicialização do Banco de Dados e Execução do Servidor
 async function startServer() {
   await initDb();
+
+  const userCount = await User.count();
+  if (userCount === 0) {
+    console.log('Banco vazio detectado. Executando seed inicial...');
+    await seed();
+  }
+
   app.listen(PORT, '0.0.0.0', () => {
     console.log(`Servidor rodando em http://localhost:${PORT}`);
   });

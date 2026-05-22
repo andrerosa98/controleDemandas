@@ -127,6 +127,7 @@ async function initDb(options = {}) {
     console.log('Modelos sincronizados com o banco de dados.');
   } catch (error) {
     console.error('Erro ao conectar ou sincronizar o banco de dados:', error);
+    throw error;
   }
 }
 

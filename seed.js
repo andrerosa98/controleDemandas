@@ -1,16 +1,18 @@
 const bcrypt = require('bcryptjs');
 const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require('./database');
 
-async function seed() {
-  // Inicializar o banco primeiro (não forçar em produção)
-  await initDb();
+async function seed(options = {}) {
+  const force = Boolean(options.force);
+
+  // Inicializar o banco primeiro
+  await initDb({ force });
 
   // Se já existirem usuários, presumimos que o banco já foi populado — pular seeding.
   try {
     const existing = await User.count();
     if (existing && existing > 0) {
       console.log('Seed pulado: o banco já contém dados.');
-      process.exit(0);
+      return { skipped: true };
     }
   } catch (err) {
     console.error('Erro ao verificar dados existentes:', err);
@@ -166,10 +168,16 @@ async function seed() {
   ]);
 
   console.log("Banco de dados populado com sucesso!");
-  process.exit(0);
+  return { skipped: false };
 }
 
-seed().catch(err => {
-  console.error("Erro durante o seeding:", err);
-  process.exit(1);
-});
+if (require.main === module) {
+  seed({ force: String(process.env.FORCE_SEED || '').toLowerCase() === 'true' })
+    .then(() => process.exit(0))
+    .catch(err => {
+      console.error("Erro durante o seeding:", err);
+      process.exit(1);
+    });
+}
+
+module.exports = { seed };

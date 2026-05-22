@@ -11,7 +11,7 @@ services:
     runtime: node
     plan: starter
     buildCommand: npm install
-    startCommand: npm run seed && npm start
+    startCommand: npm start
     initialDeployHook: npm run seed
     healthCheckPath: /
     envVars:
