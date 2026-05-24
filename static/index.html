@@ -59,13 +59,19 @@
          2. TELA DA APLICAÇÃO PRINCIPAL (APP)
          ========================================== -->
     <div id="app-view" class="view-container">
+        <!-- Overlay do Menu Mobile -->
+        <div id="sidebar-overlay" class="sidebar-overlay"></div>
+
         <!-- Sidebar Esquerda -->
-        <aside class="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-header">
                 <div class="logo" id="sidebar-logo" style="cursor: pointer;" title="Ir para o Dashboard">
                     <i class="fa-solid fa-scale-balanced logo-icon"></i>
                     <span>JurisFlow</span>
                 </div>
+                <button id="btn-close-sidebar" class="btn-close-sidebar" title="Fechar Menu">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
             </div>
             
             <nav class="sidebar-menu">
@@ -117,7 +123,10 @@
         <main class="main-content">
             <!-- Topbar / Header Superior -->
             <header class="top-header">
-                <div class="header-title">
+                <div class="header-title" style="display: flex; align-items: center; gap: 12px;">
+                    <button id="btn-toggle-sidebar" class="btn-toggle-sidebar" title="Abrir Menu">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
                     <h2 id="current-view-title">Dashboard</h2>
                 </div>
                 <div class="header-actions">

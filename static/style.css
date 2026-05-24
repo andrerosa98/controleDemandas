@@ -52,7 +52,7 @@ body.light-theme {
     --bg-main: #f8fafc;
     --bg-card: #ffffff;
     --bg-card-hover: #f1f5f9;
-    --bg-sidebar: #0f172a; /* Mantém a sidebar escura para sofisticação */
+    --bg-sidebar: #ffffff; /* Torna a sidebar clara no modo dia para consistência */
     --border-color: #e2e8f0;
     --text-primary: #0f172a;
     --text-secondary: #475569;
@@ -1626,6 +1626,148 @@ th.sortable-completed i {
 #sidebar-logo:hover {
     opacity: 0.9;
     transform: scale(1.02);
+}
+
+/* ==========================================================================
+   RESPONSIVIDADE E BOTÕES DO SIDEBAR MOBILE
+   ========================================================================== */
+
+/* Botões do menu mobile - Escondidos por padrão */
+.btn-toggle-sidebar,
+.btn-close-sidebar {
+    display: none;
+    background: transparent;
+    border: none;
+    font-size: 1.3rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: color var(--transition-fast);
+}
+
+.btn-toggle-sidebar {
+    color: var(--text-primary);
+}
+
+.btn-toggle-sidebar:hover,
+.btn-close-sidebar:hover {
+    color: var(--color-primary);
+}
+
+.sidebar-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-normal);
+}
+
+.sidebar-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+@media (max-width: 768px) {
+    /* Exibir botões de toggle no mobile */
+    .btn-toggle-sidebar,
+    .btn-close-sidebar {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    /* Layout principal mobile */
+    #app-view {
+        flex-direction: column;
+    }
+
+    /* Ajustar Sidebar como gaveta (drawer) overlay */
+    .sidebar {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 270px;
+        z-index: 1000;
+        transform: translateX(-100%);
+        transition: transform var(--transition-normal);
+        box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25);
+    }
+
+    .sidebar.mobile-active {
+        transform: translateX(0);
+    }
+
+    /* Ajuste de cabeçalho da sidebar mobile */
+    .sidebar-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 20px 24px;
+    }
+
+    /* Área de Conteúdo principal ocupa tela inteira */
+    .main-content {
+        width: 100%;
+        height: 100vh;
+    }
+
+    .top-header {
+        padding: 0 15px;
+    }
+
+    .date-display {
+        display: none; /* Oculta a data no celular para economizar espaço */
+    }
+
+    /* Ajustar a largura dos formulários de cadastro de pacientes / usuários no mobile */
+    .patients-layout {
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 20px;
+    }
+
+    /* Ajustes em formulários e modais */
+    .form-container {
+        padding: 15px;
+    }
+
+    .form-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+    }
+
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+    }
+
+    /* Filtros da lista de demandas */
+    .filter-bar {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 15px;
+    }
+
+    .filter-bar > * {
+        width: 100% !important;
+        flex: 1 1 100% !important;
+    }
+
+    .search-input {
+        width: 100%;
+    }
 }
 
 /* Hide Print Only by default */

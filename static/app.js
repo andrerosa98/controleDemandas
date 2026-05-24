@@ -389,6 +389,13 @@ function updateDateDisplay() {
 // ==========================================================================
 
 function setupEventListeners() {
+    const closeSidebarMobile = () => {
+        const sidebar = document.getElementById('sidebar');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+        if (sidebar) sidebar.classList.remove('mobile-active');
+        if (sidebarOverlay) sidebarOverlay.classList.remove('active');
+    };
+
     // Formulário de Login
     document.getElementById('login-form').addEventListener('submit', handleLogin);
     
@@ -404,6 +411,9 @@ function setupEventListeners() {
             e.preventDefault();
             const target = item.getAttribute('data-target');
             switchView(target);
+            if (window.innerWidth <= 768) {
+                closeSidebarMobile();
+            }
         });
     });
 
@@ -677,6 +687,9 @@ function setupEventListeners() {
     if (sidebarLogo) {
         sidebarLogo.addEventListener('click', () => {
             switchView('dashboard');
+            if (window.innerWidth <= 768) {
+                closeSidebarMobile();
+            }
         });
     }
 
@@ -715,6 +728,27 @@ function setupEventListeners() {
     const reportTypeSelect = document.getElementById('report-type-select');
     if (reportTypeSelect) {
         reportTypeSelect.addEventListener('change', handleReportTypeChange);
+    }
+
+    // Ouvintes de evento do menu lateral responsivo
+    const btnToggleSidebar = document.getElementById('btn-toggle-sidebar');
+    const btnCloseSidebar = document.getElementById('btn-close-sidebar');
+    const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+    if (btnToggleSidebar) {
+        btnToggleSidebar.addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            if (sidebar) sidebar.classList.add('mobile-active');
+            if (sidebarOverlay) sidebarOverlay.classList.add('active');
+        });
+    }
+
+    if (btnCloseSidebar) {
+        btnCloseSidebar.addEventListener('click', closeSidebarMobile);
+    }
+
+    if (sidebarOverlay) {
+        sidebarOverlay.addEventListener('click', closeSidebarMobile);
     }
 }
 
