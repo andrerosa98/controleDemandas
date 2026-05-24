@@ -98,6 +98,17 @@ const AuditLog = sequelize.define('AuditLog', {
   created_at: { type: DataTypes.DATE, defaultValue: Sequelize.NOW }
 }, { tableName: 'audit_logs' });
 
+// 6. Modelo de Notificações
+const Notification = sequelize.define('Notification', {
+  id: { type: DataTypes.INTEGER, primaryKey: true, autoIncrement: true },
+  user_id: { type: DataTypes.INTEGER, allowNull: false },
+  demand_id: { type: DataTypes.INTEGER, allowNull: false },
+  type: { type: DataTypes.STRING, allowNull: false }, // NEW_DEMAND, COMMENT_ADDED, DEMAND_COMPLETED
+  message: { type: DataTypes.STRING, allowNull: false },
+  is_read: { type: DataTypes.BOOLEAN, defaultValue: false },
+  created_at: { type: DataTypes.DATE, defaultValue: Sequelize.NOW }
+}, { tableName: 'notifications' });
+
 // ==========================================
 // ASSOCIAÇÕES / RELACIONAMENTOS
 // ==========================================
@@ -108,6 +119,7 @@ Demand.belongsTo(User, { foreignKey: 'creator_id', as: 'creator' });
 Demand.belongsTo(User, { foreignKey: 'current_user_id', as: 'current_user' });
 Demand.hasMany(Comment, { foreignKey: 'demand_id', as: 'comments', onDelete: 'CASCADE' });
 Demand.hasMany(AuditLog, { foreignKey: 'demand_id', as: 'audit_logs', onDelete: 'SET NULL' });
+Demand.hasMany(Notification, { foreignKey: 'demand_id', as: 'notifications', onDelete: 'CASCADE' });
 
 // Relacionamentos de Observações
 Comment.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
@@ -116,6 +128,10 @@ Comment.belongsTo(Demand, { foreignKey: 'demand_id' });
 // Relacionamentos de Histórico
 AuditLog.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 AuditLog.belongsTo(Demand, { foreignKey: 'demand_id' });
+
+// Relacionamentos de Notificações
+Notification.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
+Notification.belongsTo(Demand, { foreignKey: 'demand_id', as: 'demand' });
 
 // Inicialização das tabelas
 async function initDb(options = {}) {
@@ -154,5 +170,6 @@ module.exports = {
   Demand,
   Comment,
   AuditLog,
+  Notification,
   initDb
 };

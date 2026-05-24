@@ -6,7 +6,7 @@ const bcrypt = require('bcryptjs');
 const helmet = require('helmet');
 const rateLimit = require('express-rate-limit');
 const { Op } = require('sequelize');
-const { initDb, User, Patient, Demand, Comment, AuditLog, sequelize } = require('./database');
+const { initDb, User, Patient, Demand, Comment, AuditLog, Notification, sequelize } = require('./database');
 const { seed } = require('./seed');
 
 // Helper para converter datas com segurança (string ou objeto Date)
@@ -19,6 +19,23 @@ function safeParseDate(val) {
     return new Date(val);
   }
   return new Date(val);
+}
+
+// Helper para obter o ID do último usuário que encaminhou a demanda
+async function getLastForwarderId(demandId) {
+  try {
+    const lastForward = await AuditLog.findOne({
+      where: {
+        demand_id: demandId,
+        action_type: 'FORWARD'
+      },
+      order: [['id', 'DESC']]
+    });
+    return lastForward ? lastForward.user_id : null;
+  } catch (error) {
+    console.error('Erro ao buscar o último encaminhador:', error);
+    return null;
+  }
 }
 
 const app = express();
@@ -816,6 +833,14 @@ app.post('/api/demands', tokenRequired, async (asyncReq, res) => {
         action_type: 'FORWARD',
         description: `Demanda encaminhada no cadastro inicial para ${targetName}.`
       });
+
+      // Notificar o responsável inicial
+      await Notification.create({
+        user_id: parseInt(current_user_id),
+        demand_id: demand.id,
+        type: 'NEW_DEMAND',
+        message: `Você recebeu uma nova demanda: "${demand.title}" (Processo: ${demand.process_number})`
+      });
     }
     
     return res.status(201).json({ message: 'Demanda criada com sucesso!', demand_id: demand.id });
@@ -991,6 +1016,16 @@ app.post('/api/demands/:id/forward', tokenRequired, async (req, res) => {
       action_type: 'FORWARD',
       description: `Demanda encaminhada para ${targetUser.name}.`
     });
+
+    // Notificar o novo responsável se for um usuário diferente
+    if (parseInt(new_user_id) !== currentUserId) {
+      await Notification.create({
+        user_id: parseInt(new_user_id),
+        demand_id: demandId,
+        type: 'NEW_DEMAND',
+        message: `A demanda "${demand.title}" foi encaminhada para você por ${req.currentUser.name}.`
+      });
+    }
     
     return res.json({ message: `Demanda encaminhada com sucesso para ${targetUser.name}!` });
   } catch (error) {
@@ -1042,6 +1077,19 @@ app.post('/api/demands/:id/status', tokenRequired, async (req, res) => {
       action_type: 'STATUS_CHANGE',
       description: `Alterou o status de '${oldStatus}' para '${status}'.`
     });
+
+    // Se o processo foi concluído, notifica o último que o encaminhou
+    if (status === 'Concluído') {
+      const lastForwarderId = await getLastForwarderId(demandId);
+      if (lastForwarderId && lastForwarderId !== currentUserId) {
+        await Notification.create({
+          user_id: lastForwarderId,
+          demand_id: demandId,
+          type: 'DEMAND_COMPLETED',
+          message: `A demanda "${demand.title}" que você encaminhou foi concluída por ${req.currentUser.name}.`
+        });
+      }
+    }
     
     return res.json({ message: `Status alterado para ${status} com sucesso!` });
   } catch (error) {
@@ -1082,6 +1130,17 @@ app.post('/api/demands/:id/comments', tokenRequired, async (req, res) => {
       action_type: 'COMMENT_ADD',
       description: 'Adicionou uma observação.'
     });
+
+    // Notificar o último que encaminhou a demanda
+    const lastForwarderId = await getLastForwarderId(demandId);
+    if (lastForwarderId && lastForwarderId !== currentUserId) {
+      await Notification.create({
+        user_id: lastForwarderId,
+        demand_id: demandId,
+        type: 'COMMENT_ADDED',
+        message: `${req.currentUser.name} adicionou uma observação na demanda "${demand.title}" que você encaminhou.`
+      });
+    }
     
     return res.status(201).json({ message: 'Observação adicionada com sucesso!' });
   } catch (error) {
@@ -1135,6 +1194,53 @@ app.put('/api/comments/:id', tokenRequired, async (req, res) => {
   } catch (error) {
     console.error(error);
     return res.status(500).json({ message: 'Erro ao editar observação.' });
+  }
+});
+
+// ==========================================
+// ROTAS DE NOTIFICAÇÕES
+// ==========================================
+
+// Obter notificações não lidas do usuário logado
+app.get('/api/notifications', tokenRequired, async (req, res) => {
+  try {
+    const notifications = await Notification.findAll({
+      where: {
+        user_id: req.currentUser.user_id,
+        is_read: false
+      },
+      order: [['created_at', 'ASC']]
+    });
+    return res.json(notifications);
+  } catch (error) {
+    console.error('Erro ao buscar notificações:', error);
+    return res.status(500).json({ message: 'Erro ao buscar notificações.' });
+  }
+});
+
+// Marcar notificações como lidas
+app.post('/api/notifications/mark-read', tokenRequired, async (req, res) => {
+  const { ids } = req.body;
+  
+  try {
+    const whereClause = {
+      user_id: req.currentUser.user_id,
+      is_read: false
+    };
+    
+    if (ids && Array.isArray(ids) && ids.length > 0) {
+      whereClause.id = { [Op.in]: ids.map(id => parseInt(id)) };
+    }
+    
+    await Notification.update(
+      { is_read: true },
+      { where: whereClause }
+    );
+    
+    return res.json({ message: 'Notificações marcadas como lidas com sucesso.' });
+  } catch (error) {
+    console.error('Erro ao marcar notificações como lidas:', error);
+    return res.status(500).json({ message: 'Erro ao marcar notificações como lidas.' });
   }
 });
 

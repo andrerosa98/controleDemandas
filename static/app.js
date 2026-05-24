@@ -9,6 +9,7 @@ let EDIT_SELECTED_PATIENT = null;
 let DEMANDS_CHART = null;
 let RESPONSIBLES_CHART = null;
 let ACTIVE_COUNTDOWN_INTERVAL = null;
+let NOTIFICATION_POLL_INTERVAL = null;
 let CURRENT_DEMANDS = [];
 let SORT_COLUMN = '';
 let SORT_DIRECTION = 'asc';
@@ -70,6 +71,8 @@ async function checkAuthSession() {
             setupUserProfile();
             showView('app');
             switchView('dashboard');
+            requestNotificationPermission();
+            startNotificationPolling();
         } else {
             // Token inválido/expirado
             logout();
@@ -145,6 +148,7 @@ function logout() {
     if (ACTIVE_COUNTDOWN_INTERVAL) {
         clearInterval(ACTIVE_COUNTDOWN_INTERVAL);
     }
+    stopNotificationPolling();
     showView('login');
     showToast("Sessão encerrada com sucesso.", "info");
 }
@@ -177,6 +181,92 @@ function showToast(message, type = 'success') {
             toast.remove();
         }, 300);
     }, 4000);
+}
+
+// ==========================================================================
+// NOTIFICAÇÕES VIA BROWSER
+// ==========================================================================
+
+function requestNotificationPermission() {
+    if (!("Notification" in window)) {
+        console.log("Este navegador não suporta notificações de desktop.");
+        return;
+    }
+    if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+        Notification.requestPermission();
+    }
+}
+
+function startNotificationPolling() {
+    if (NOTIFICATION_POLL_INTERVAL) {
+        clearInterval(NOTIFICATION_POLL_INTERVAL);
+    }
+    
+    // Executa a primeira busca imediatamente
+    pollNotifications();
+    
+    // Configura o intervalo para buscar a cada 20 segundos
+    NOTIFICATION_POLL_INTERVAL = setInterval(pollNotifications, 20000);
+}
+
+function stopNotificationPolling() {
+    if (NOTIFICATION_POLL_INTERVAL) {
+        clearInterval(NOTIFICATION_POLL_INTERVAL);
+        NOTIFICATION_POLL_INTERVAL = null;
+    }
+}
+
+async function pollNotifications() {
+    if (!getAuthToken()) {
+        stopNotificationPolling();
+        return;
+    }
+    
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/notifications`, {
+            method: 'GET',
+            headers: getHeaders()
+        });
+        
+        if (!response.ok) return;
+        
+        const notifications = await response.json();
+        if (notifications && notifications.length > 0) {
+            notifications.forEach(notif => {
+                // Notificação no Navegador
+                if (Notification.permission === "granted") {
+                    try {
+                        const browserNotification = new Notification("JurisFlow", {
+                            body: notif.message,
+                            icon: "favicon.png"
+                        });
+                        
+                        browserNotification.onclick = function() {
+                            window.focus();
+                            if (notif.demand_id) {
+                                viewDemandDetails(notif.demand_id);
+                            }
+                        };
+                    } catch (err) {
+                        console.error("Erro ao instanciar Notification:", err);
+                    }
+                }
+                
+                // Mostrar também um toast interno na tela
+                showToast(notif.message, "info");
+            });
+            
+            // Marcar todas como lidas
+            const ids = notifications.map(n => n.id);
+            await fetch(`${API_BASE_URL}/api/notifications/mark-read`, {
+                method: 'POST',
+                headers: getHeaders(),
+                body: JSON.stringify({ ids })
+            });
+        }
+    } catch (error) {
+        console.error("Erro ao buscar notificações do servidor:", error);
+    }
 }
 
 // ==========================================================================
@@ -752,6 +842,8 @@ async function handleLogin(e) {
             showView('app');
             switchView('dashboard');
             showToast(`Bem-vindo, ${CURRENT_USER.name}!`, "success");
+            requestNotificationPermission();
+            startNotificationPolling();
             
             // Limpa form
             usernameInput.value = '';
