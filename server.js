@@ -38,6 +38,32 @@ async function getLastForwarderId(demandId) {
   }
 }
 
+// Helper para validação matemática de CPF brasileiro
+function isValidCPF(cpf) {
+  if (!cpf || typeof cpf !== 'string') return false;
+  const cleanCpf = cpf.replace(/\D/g, '');
+  if (cleanCpf.length !== 11) return false;
+  if (/^(\d)\1{10}$/.test(cleanCpf)) return false;
+  
+  let sum = 0;
+  for (let i = 0; i < 9; i++) {
+    sum += parseInt(cleanCpf.charAt(i)) * (10 - i);
+  }
+  let rest = sum % 11;
+  let digit1 = rest < 2 ? 0 : 11 - rest;
+  if (parseInt(cleanCpf.charAt(9)) !== digit1) return false;
+  
+  sum = 0;
+  for (let i = 0; i < 10; i++) {
+    sum += parseInt(cleanCpf.charAt(i)) * (11 - i);
+  }
+  rest = sum % 11;
+  let digit2 = rest < 2 ? 0 : 11 - rest;
+  if (parseInt(cleanCpf.charAt(10)) !== digit2) return false;
+  
+  return true;
+}
+
 const app = express();
 const PORT = process.env.PORT || 5000;
 const NODE_ENV = process.env.NODE_ENV || 'development';
@@ -472,6 +498,10 @@ app.post('/api/patients', tokenRequired, adminRequired, async (req, res) => {
   if (!name) {
     return res.status(400).json({ message: 'O nome do paciente é obrigatório!' });
   }
+
+  if (cpf && cpf.trim() && !isValidCPF(cpf)) {
+    return res.status(400).json({ message: 'O CPF informado é inválido!' });
+  }
   
   try {
     const patient = await Patient.create({
@@ -498,6 +528,10 @@ app.put('/api/patients/:id', tokenRequired, adminRequired, async (req, res) => {
   if (!name) {
     return res.status(400).json({ message: 'O nome do paciente é obrigatório!' });
   }
+
+  if (cpf && cpf.trim() && !isValidCPF(cpf)) {
+    return res.status(400).json({ message: 'O CPF informado é inválido!' });
+  }
   
   try {
     const patient = await Patient.findByPk(patientId);
@@ -520,6 +554,23 @@ app.put('/api/patients/:id', tokenRequired, adminRequired, async (req, res) => {
     }
     console.error(error);
     return res.status(500).json({ message: 'Erro ao atualizar paciente.' });
+  }
+});
+
+app.get('/api/patients/:id/active-demands', tokenRequired, async (req, res) => {
+  const patientId = parseInt(req.params.id);
+  
+  try {
+    const activeDemand = await Demand.findOne({
+      where: {
+        patient_id: patientId,
+        status: { [Op.in]: ['Pendente', 'Em Andamento', 'Atrasado'] }
+      }
+    });
+    return res.json(activeDemand);
+  } catch (error) {
+    console.error('Erro ao verificar demandas ativas:', error);
+    return res.status(500).json({ message: 'Erro ao verificar demandas ativas.' });
   }
 });
 
@@ -770,6 +821,10 @@ app.get('/api/demands/:id', tokenRequired, async (req, res) => {
 });
 
 app.post('/api/demands', tokenRequired, async (asyncReq, res) => {
+  if (asyncReq.currentUser.role === 'Administrativo') {
+    return res.status(403).json({ message: 'Acesso negado. Usuários do perfil Administrativo não possuem permissão para autuar novas demandas.' });
+  }
+
   const { process_number, prodata_number, patient_id, title, description, judge, received_at, deadline, current_user_id } = asyncReq.body;
   
   const requiredFields = ['process_number', 'patient_id', 'title', 'received_at', 'deadline', 'current_user_id'];

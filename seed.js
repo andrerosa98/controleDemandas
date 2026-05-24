@@ -27,7 +27,8 @@ async function seed(options = {}) {
   const users = await User.bulkCreate([
     { username: 'admin', password: passAdmin, name: 'Administrador do Sistema', role: 'Admin' },
     { username: 'usuario1', password: passUser, name: 'Dr. Lucas Ribeiro (Advogado)', role: 'Advogado' },
-    { username: 'usuario2', password: passUser, name: 'Dra. Patricia Lima (Médica)', role: 'Médico' }
+    { username: 'usuario2', password: passUser, name: 'Dra. Patricia Lima (Médica)', role: 'Médico' },
+    { username: 'usuario3', password: passUser, name: 'Carlos Souza (Administrativo)', role: 'Administrativo' }
   ]);
 
   const userMap = {};

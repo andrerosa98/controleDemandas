@@ -140,6 +140,16 @@ function updateUIForRole() {
             btnQuickNewPatient.classList.add('hidden');
         }
     }
+
+    // Ocultar menu de Nova Demanda se for Administrativo
+    const newDemandMenuItem = document.querySelector('.menu-item[data-target="new-demand"]');
+    if (newDemandMenuItem) {
+        if (CURRENT_USER && CURRENT_USER.role === 'Administrativo') {
+            newDemandMenuItem.classList.add('hidden');
+        } else {
+            newDemandMenuItem.classList.remove('hidden');
+        }
+    }
 }
 
 function logout() {
@@ -317,6 +327,12 @@ function showView(viewType) {
 
 // Alternar entre as subviews internas do app
 function switchView(target) {
+    if (target === 'new-demand' && CURRENT_USER && CURRENT_USER.role === 'Administrativo') {
+        showToast('Acesso negado. Usuários do perfil Administrativo não possuem permissão para autuar novas demandas.', 'error');
+        switchView('dashboard');
+        return;
+    }
+
     // Desativar todas as subviews
     document.querySelectorAll('.subview').forEach(view => {
         view.classList.remove('active');
@@ -759,6 +775,32 @@ function debounce(func, delay) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), delay);
     };
+}
+
+// Função para validação matemática de CPF brasileiro
+function isValidCPF(cpf) {
+    if (!cpf || typeof cpf !== 'string') return false;
+    const cleanCpf = cpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) return false;
+    if (/^(\d)\1{10}$/.test(cleanCpf)) return false;
+    
+    let sum = 0;
+    for (let i = 0; i < 9; i++) {
+        sum += parseInt(cleanCpf.charAt(i)) * (10 - i);
+    }
+    let rest = sum % 11;
+    let digit1 = rest < 2 ? 0 : 11 - rest;
+    if (parseInt(cleanCpf.charAt(9)) !== digit1) return false;
+    
+    sum = 0;
+    for (let i = 0; i < 10; i++) {
+        sum += parseInt(cleanCpf.charAt(i)) * (11 - i);
+    }
+    rest = sum % 11;
+    let digit2 = rest < 2 ? 0 : 11 - rest;
+    if (parseInt(cleanCpf.charAt(10)) !== digit2) return false;
+    
+    return true;
 }
 
 // Funções auxiliares para formatação de máscara e cálculo do prazo limite
@@ -1345,12 +1387,42 @@ function selectPatientForDemand(patient) {
     const dropdown = document.getElementById('patient-search-results');
     dropdown.innerHTML = '';
     dropdown.classList.add('hidden');
+
+    // Verificar se há demanda ativa para este paciente
+    fetch(`${API_BASE_URL}/api/patients/${patient.id}/active-demands`, {
+        headers: getHeaders()
+    })
+    .then(res => res.ok ? res.json() : null)
+    .then(activeDemand => {
+        const warningEl = document.getElementById('patient-active-process-warning');
+        const linkEl = document.getElementById('link-active-process');
+        
+        if (activeDemand) {
+            warningEl.querySelector('.alert-content span').innerHTML = `<strong>Atenção:</strong> Este paciente já possui uma demanda ativa no sistema: "${activeDemand.title}" (Processo: ${activeDemand.process_number}). `;
+            
+            // Configurar clique no link para visualizar detalhes do processo
+            linkEl.onclick = (e) => {
+                e.preventDefault();
+                viewDemandDetails(activeDemand.id);
+            };
+            
+            warningEl.classList.remove('hidden');
+        } else {
+            warningEl.classList.add('hidden');
+        }
+    })
+    .catch(err => {
+        console.error("Erro ao verificar processos ativos:", err);
+    });
 }
 
 function clearSelectedPatient() {
     SELECTED_PATIENT = null;
     document.getElementById('selected-patient-id').value = '';
     document.getElementById('selected-patient-card').classList.add('hidden');
+    
+    const warningEl = document.getElementById('patient-active-process-warning');
+    if (warningEl) warningEl.classList.add('hidden');
     
     const searchInput = document.getElementById('demand-patient-search');
     searchInput.classList.remove('hidden');
@@ -1362,9 +1434,15 @@ function clearSelectedPatient() {
 async function handleQuickPatientSubmit(e) {
     e.preventDefault();
     
+    const cpf = document.getElementById('quick-pat-cpf').value.trim();
+    if (cpf && !isValidCPF(cpf)) {
+        showToast("Por favor, informe um CPF válido!", "error");
+        return;
+    }
+    
     const payload = {
         name: document.getElementById('quick-pat-name').value.trim(),
-        cpf: document.getElementById('quick-pat-cpf').value.trim(),
+        cpf: cpf,
         cns: document.getElementById('quick-pat-cns').value.trim(),
         mother_name: document.getElementById('quick-pat-mother').value.trim(),
         birth_date: document.getElementById('quick-pat-birth').value
@@ -1559,9 +1637,15 @@ function openEditPatientModal(patient) {
 async function handleEditPatientSubmit(e) {
     e.preventDefault();
     const patientId = document.getElementById('edit-pat-id').value;
+    const cpf = document.getElementById('edit-pat-cpf').value.trim();
+    if (cpf && !isValidCPF(cpf)) {
+        showToast("Por favor, informe um CPF válido!", "error");
+        return;
+    }
+
     const payload = {
         name: document.getElementById('edit-pat-name').value.trim(),
-        cpf: document.getElementById('edit-pat-cpf').value.trim(),
+        cpf: cpf,
         cns: document.getElementById('edit-pat-cns').value.trim(),
         mother_name: document.getElementById('edit-pat-mother').value.trim(),
         birth_date: document.getElementById('edit-pat-birth').value
@@ -1593,9 +1677,15 @@ async function handleEditPatientSubmit(e) {
 async function handleFullPatientSubmit(e) {
     e.preventDefault();
     
+    const cpf = document.getElementById('pat-cpf').value.trim();
+    if (cpf && !isValidCPF(cpf)) {
+        showToast("Por favor, informe um CPF válido!", "error");
+        return;
+    }
+
     const payload = {
         name: document.getElementById('pat-name').value.trim(),
-        cpf: document.getElementById('pat-cpf').value.trim(),
+        cpf: cpf,
         cns: document.getElementById('pat-cns').value.trim(),
         mother_name: document.getElementById('pat-mother').value.trim(),
         birth_date: document.getElementById('pat-birth').value

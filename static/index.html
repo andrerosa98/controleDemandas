@@ -344,6 +344,14 @@
                                         </div>
                                         <button type="button" id="btn-clear-patient" class="btn-clear" title="Remover seleção"><i class="fa-solid fa-xmark"></i></button>
                                     </div>
+                                    <!-- Alerta de Processo Ativo -->
+                                    <div id="patient-active-process-warning" class="alert-box alert-warning hidden" style="margin-top: 15px;">
+                                        <i class="fa-solid fa-circle-exclamation alert-icon"></i>
+                                        <div class="alert-content">
+                                            <span><strong>Atenção:</strong> Este paciente já possui uma demanda ativa no sistema: </span>
+                                            <a href="#" id="link-active-process" class="alert-link">Visualizar processo</a>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -502,6 +510,7 @@
                                             <option value="Admin">Administrador</option>
                                             <option value="Médico">Médico</option>
                                             <option value="Advogado">Advogado</option>
+                                            <option value="Administrativo">Administrativo</option>
                                         </select>
                                     </div>
                                     <div style="display: flex; gap: 8px;">

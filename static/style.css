@@ -1090,6 +1090,44 @@ a {
     color: var(--color-danger);
 }
 
+.alert-box {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 16px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    font-size: 0.85rem;
+}
+
+.alert-warning {
+    background-color: var(--color-warning-light);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: var(--color-warning);
+}
+
+.alert-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+}
+
+.alert-content {
+    line-height: 1.4;
+}
+
+.alert-link {
+    color: var(--color-primary);
+    text-decoration: underline;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.alert-link:hover {
+    color: var(--color-primary-hover);
+}
+
+
 .form-actions {
     display: flex;
     justify-content: flex-end;
